@@ -20,7 +20,7 @@ INFO = {
     "url": " yor url for download your data or something else",
     "version": "0.1.0",
     "year": 2019,
-    "contributor": "alexey okunev",
+    "contributor": " ",
     "date_created": datetime.datetime.utcnow().isoformat(' ')
 }
 
