@@ -93,5 +93,5 @@ def main():
 
 
 if __name__ == "__main__":
-    read_kml_and_load_maps(ANNOT_DIR, MAP_DIR, GOOGLE_MAPS_API_KEY, zoom, size)
+    read_kml_and_load_maps(ANNOT_DIR, MAP_DIR, MASKS_DIR, GOOGLE_MAPS_API_KEY, zoom, size)
     main()
