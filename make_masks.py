@@ -37,6 +37,17 @@ def binary_mask_to_rle(binary_mask):
 
     return rle
 
+def rle_encode_kaggle_style(binary_mask):
+    '''
+    img: numpy array, 1 - mask, 0 - background
+    Returns run length as string formated
+    '''
+    pixels = binary_mask.flatten()
+    pixels = np.concatenate([[0], pixels, [0]])
+    runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
+    runs[1::2] -= runs[::2]
+    return ' '.join(str(x) for x in runs)
+
 def binary_mask_to_polygon(binary_mask, tolerance=0):
     """Converts a binary mask to COCO polygon representation
     Args:

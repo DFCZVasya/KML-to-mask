@@ -251,44 +251,72 @@ def obj_to_mask(polygon, exact_map_lat, exact_map_long, zoom, size):
 def read_kml_and_load_maps(ANNOT_DIR, MAP_DIR, MASKS_DIR,  GOOGLE_MAPS_API_KEY,zoom=17, size=640):
     obj2map = []
     kml_files = [file for file in os.listdir(ANNOT_DIR) if file.endswith('.kml')]
+    print(kml_files)
     map_files = os.listdir(MAP_DIR)
     masks_saved = {}
     counter = 0
     for kml in kml_files:
+        region = kml.split('.kml')[0]
         path_to_kml = os.path.join(ANNOT_DIR, kml)
         print('{} processed...'.format(path_to_kml))
         _, Polygons = get_placemarks(path_to_kml)
 
         for polygon in Polygons:
-            # find coordinates of the center of the map which contain the object
+            #find coordinates of the center of the map which contain the object
             lat, long = get_polygon_center(polygon)
-            exact_map_lat, n_map_lat_int = get_exact_map_lat(lat, zoom)
+            exact_map_lat,  n_map_lat_int =  get_exact_map_lat(lat, zoom)
             exact_map_long, n_map_long_int = get_exact_map_long(long, zoom)
-            # create nameof coordinates and zoom
-            name = 'lat_{:.7f}_long_{:.7f}_zoom_{}'.format(exact_map_lat, exact_map_long, zoom)
+            #create nameof coordinates and zoom
+            name = 'lat_{:.7f}_long_{:.7f}_zoom_{}'.format( exact_map_lat, exact_map_long, zoom)
             im_name = name + '.jpg'
-            # download maps if is not in MAP_DIR
+            #download maps if is not in MAP_DIR
             if im_name not in map_files:
-                im = gl_map_by_center(exact_map_lat, exact_map_long,  GOOGLE_MAPS_API_KEY,zoom=zoom, size=size)
+                im = gl_map_by_center(exact_map_lat, exact_map_long, zoom = zoom, size = size)
                 im_path = os.path.join(MAP_DIR, im_name)
                 im.save(im_path)
                 im = np.array(im)
                 print('{} saved'.format(im_path))
                 map_files.append(im_name)
-            # counter for masks at the same maps
+            #counter for masks at the same maps
             try:
                 masks_saved[name] += 1
             except KeyError:
                 masks_saved[name] = 0
-            # crate mask of polygon and save
+            #crate mask of polygon and save
             mask_png = obj_to_mask(polygon, exact_map_lat, exact_map_long, zoom, size)
             png_name = name + '_hill_{}.png'.format(masks_saved[name])
             png_path = os.path.join(MASKS_DIR, png_name)
             cv2.imwrite(png_path, mask_png.astype(np.uint8))
 
-            obj2map.append([counter, exact_map_long, exact_map_lat, zoom, size, name])
+            obj2map.append([counter, exact_map_long, exact_map_lat, zoom, size, name, region])
         counter += 1
 
     path_to_table = os.path.join(ANNOT_DIR, 'obj2map.pickle')
     with open(path_to_table, 'wb') as f:
         pickle.dump(obj2map, f)
+
+def remove_masks_with_ovelapping_pixels(masks_dir):
+    files = os.listdir(masks_dir)
+    masks = []
+    for file in files:
+        path = os.path.join(masks_dir, file)
+        mask = Image.open(path)
+        masks.append([file, np.array(mask)])
+    for file_1, mask_1 in masks:
+        for file_2, mask_2 in masks:
+            if (file_1 != file_2) and (mask_1 & mask_2).any():
+                map_1 = file_1.split('_')[:4]
+                map_2 = file_2.split('_')[:4]
+                if map_1 == map_2:
+                    mask_1_num = file_1.split('_')[-1].split('.')[0]
+                    mask_2_num = file_2.split('_')[-1].split('.')[0]
+                    print('{}, {}'.format(file_1, file_2))
+                    if mask_1_num > mask_2_num:
+                        rem_path = os.path.join(masks_dir, file_1)
+                    else:
+                        rem_path = os.path.join(masks_dir, file_2)
+                    try:
+                        os.remove(rem_path)
+                        print('removed {}'.format(rem_path))
+                    except:
+                        pass
