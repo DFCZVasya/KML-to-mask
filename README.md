@@ -68,8 +68,8 @@ $ python main.py
 To visualize the results, you need to change the following lines in the **visualization.py**:
 ```ruby
 DST_DIR = 'DIR_FOR_HASHED_MAPS' #your save dir for hashed maps
-coco_hashed_path = os.path.join(ANNOT_DIR, 'coco_hashed.json') #you can chose your own path
-csv_hashed_path = os.path.join(ANNOT_DIR, 'kaggle_hashed.csv') #you can chose your own path
+coco_hashed_path = os.path.join(ANNOT_DIR, 'coco_hashed.json') #you can choose your own path
+csv_hashed_path = os.path.join(ANNOT_DIR, 'kaggle_hashed.csv') #you can choose your own path
 
 ```
 After that, you can run the program through the terminal using the command:
