@@ -65,8 +65,14 @@ After that, you can run the program through the terminal using the command:
 ```
 $ python main.py
 ```
-To visualize the results, you can run **visualization.py** through the terminal using the command:
+To visualize the results, you need to change the following lines in the **visualization.py**:
+```ruby
+DST_DIR = 'DIR_FOR_HASHED_MAPS' #your save dir for hashed maps
+coco_hashed_path = os.path.join(ANNOT_DIR, 'coco_hashed.json') #you can chose your own path
+csv_hashed_path = os.path.join(ANNOT_DIR, 'kaggle_hashed.csv') #you can chose your own path
+
+```
+After that, you can run the program through the terminal using the command:
 ```
 $ pytnon visualization.py
 ```
-
