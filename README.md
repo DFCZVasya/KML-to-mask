@@ -27,7 +27,7 @@ DATA_DIR = os.path.abspath(r'your DATA DIR')
 MAP_DIR = os.path.join(DATA_DIR, 'your MAP DIR')
 MASKS_DIR = os.path.join(DATA_DIR, 'your MASKS DIR')
 ANNOT_DIR = os.path.join(DATA_DIR, 'your ANNOTATION DIR')
-ANNOT_SAVE_PATH = os.path.join(ANNOT_DIR, 'coco.json')  # you also can chose your own name
+ANNOT_SAVE_PATH = os.path.join(ANNOT_DIR, 'coco.json')  # you also can choose your own name
 KAGGLE_SAVE_PATH = os.path.join(ANNOT_DIR, 'kaggle.csv')
 ```
 You can read how to get API key here: https://developers.google.com/maps/documentation/maps-static/get-api-key
