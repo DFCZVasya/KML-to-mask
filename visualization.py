@@ -21,8 +21,8 @@ coco_path = ANNOT_SAVE_PATH
 csv_path = KAGGLE_SAVE_PATH
 
 DST_DIR = 'DIR_FOR_HASHED_MAPS' #your save dir for hashed maps
-coco_hashed_path = os.path.join(ANNOT_DIR, 'coco_hashed.json') #you can chose your own path
-csv_hashed_path = os.path.join(ANNOT_DIR, 'kaggle_hashed.csv') #you can chose your own path
+coco_hashed_path = os.path.join(ANNOT_DIR, 'coco_hashed.json') #you can choose your own path
+csv_hashed_path = os.path.join(ANNOT_DIR, 'kaggle_hashed.csv') #you can choose your own path
 
 with open(path_to_table, 'rb') as f:
         obj2map = pickle.load(f)

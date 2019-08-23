@@ -11,8 +11,8 @@ DATA_DIR = os.path.abspath(r'your DATA DIR')
 MAP_DIR = os.path.join(DATA_DIR, 'your MAP DIR')
 MASKS_DIR = os.path.join(DATA_DIR, 'your MASKS DIR')
 ANNOT_DIR = os.path.join(DATA_DIR, 'your ANNOTATION DIR')
-ANNOT_SAVE_PATH = os.path.join(ANNOT_DIR, 'coco.json')  # you also can chose your own name
-KAGGLE_SAVE_PATH = os.path.join(ANNOT_DIR, 'kaggle.csv')
+ANNOT_SAVE_PATH = os.path.join(ANNOT_DIR, 'coco.json')  # you also can choose your own name
+KAGGLE_SAVE_PATH = os.path.join(ANNOT_DIR, 'kaggle.csv') # you also can choose your own name
 
 zoom = 17
 size = 640
