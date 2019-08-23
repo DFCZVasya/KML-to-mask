@@ -3,6 +3,7 @@ from make_masks import *
 from specification_of_image import *
 from PIL import Image
 import numpy as np
+import csv
 
 GOOGLE_MAPS_API_KEY = 'your_API_key'
 
@@ -89,7 +90,7 @@ def main():
 
             image_id = image_id + 1
 
-    with open(COCO_SAVE_PATH, 'w') as output_json_file:
+    with open(ANNOT_SAVE_PATH, 'w') as output_json_file:
         json.dump(coco_output, output_json_file)
 
 def main_kaggle_csv():
