@@ -366,3 +366,56 @@ def remove_mask_duplicates(ANNOT_DIR):
     with open(path_to_obj_list, 'wb') as f:
         pickle.dump(new_list, f)
     print('')
+
+def make_masks(ANNOT_DIR, MAP_DIR, CHECK_DIR, MASKS_DIR):
+    print('creating masks')
+
+    # read list of map images
+    path_to_map_list = os.path.join(ANNOT_DIR, 'map_list.pickle')
+    with open(path_to_map_list, 'rb') as f:
+        map_list = pickle.load(f)
+
+    # read list of polygon objects
+    path_to_obj_list = os.path.join(ANNOT_DIR, 'obj_list.pickle')
+    with open(path_to_obj_list, 'rb') as f:
+        obj_list = pickle.load(f)
+
+    #initialize mask's counters
+    masks_saved = {}
+
+    #check all pairs map - polygon for intersections
+    for i, map_rec in enumerate(map_list):
+        #read map parameter and load map image
+        _, exact_map_long, exact_map_lat, zoom, size, name, region = map_rec
+        print('\rmask {} of {} processed'.format(i, len(map_list)), end='')
+        im_name = name + '.jpg'
+        src_path = os.path.join(MAP_DIR, im_name)
+        im = cv2.imread(src_path)
+
+        for polygon in obj_list:
+
+            #create mask of map and polygon
+            mask_png = obj_to_mask(polygon, exact_map_lat, exact_map_long, zoom, size)
+
+            #check for non zero mask pixels as a criterion of intersection
+            if np.sum(mask_png):
+                #counter for masks at the same maps
+                try:
+                    masks_saved[name] += 1
+                except KeyError:
+                    masks_saved[name] = 0
+
+                #save mask of polygon
+                png_name = name + '_hill_{}.png'.format(masks_saved[name])
+                png_path = os.path.join(MASKS_DIR, png_name)
+                cv2.imwrite(png_path, mask_png.astype(np.uint8))
+
+                #draw mask on map image
+                contours, _ = cv2.findContours(mask_png.astype(np.uint8),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+                cv2.drawContours(im, contours, -1, (255,255,255), 1)
+
+            #save map image in countours of objects
+            dst_path = os.path.join(CHECK_DIR, im_name)
+            cv2.imwrite(dst_path, im)
+
+    print('masks created and saved')
