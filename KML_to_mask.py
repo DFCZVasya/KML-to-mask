@@ -107,7 +107,7 @@ def get_map_for_POI(lat, long, zoom=17, size=512):
     return round(center_map_long, 7), round(center_map_lat, 7), zoom, size
 
 
-def download_google_maps_by_center(SAVE_DIR, obj2map, GOOGLE_MAPS_API_KEY):
+def download_google_maps_by_center(SAVE_DIR, obj2map):
     """
     downloads google maps with center, zoom and size, specified in obj2map list
     map instances with the same center downloaded only once
@@ -249,12 +249,28 @@ def obj_to_mask(polygon, exact_map_lat, exact_map_long, zoom, size):
 
 
 def read_kml_and_load_maps(ANNOT_DIR, MAP_DIR, MASKS_DIR,  GOOGLE_MAPS_API_KEY,zoom=17, size=640):
-    obj2map = []
+    #read previously saved lists map images or initialize it if not found
+    try:
+        path_to_map_list = os.path.join(ANNOT_DIR, 'map_list.pickle')
+        with open(path_to_map_list, 'rb') as f:
+            map_list = pickle.load(f)
+    except FileNotFoundError:
+        map_list = []
+
+    #load kml files list
     kml_files = [file for file in os.listdir(ANNOT_DIR) if file.endswith('.kml')]
     print(kml_files)
+
+    #make list of already loaded map images
     map_files = os.listdir(MAP_DIR)
-    masks_saved = {}
+
     counter = 0
+
+    #initialize polygon objects list
+    #it is always constructed from scratch using actual kml data
+    obj_list = []
+
+    #scan for masks kml files in ANNOT_DIR
     for kml in kml_files:
         region = kml.split('.kml')[0]
         path_to_kml = os.path.join(ANNOT_DIR, kml)
@@ -262,38 +278,37 @@ def read_kml_and_load_maps(ANNOT_DIR, MAP_DIR, MASKS_DIR,  GOOGLE_MAPS_API_KEY,z
         _, Polygons = get_placemarks(path_to_kml)
 
         for polygon in Polygons:
-            #find coordinates of the center of the map which contain the object
+            #coordinates of the object's bounding box center
             lat, long = get_polygon_center(polygon)
+
+            #coordinates of the center of the map which contain the center of bbox
             exact_map_lat,  n_map_lat_int =  get_exact_map_lat(lat, zoom)
             exact_map_long, n_map_long_int = get_exact_map_long(long, zoom)
-            #create nameof coordinates and zoom
-            name = 'lat_{:.7f}_long_{:.7f}_zoom_{}'.format( exact_map_lat, exact_map_long, zoom)
+
+            #create name from coordinates and zoom values
+            name = 'lat_{:.7f}_long_{:.7f}_zoom_{}'.format(exact_map_lat, exact_map_long, zoom)
             im_name = name + '.jpg'
+            im_path = os.path.join(MAP_DIR, im_name)
+
             #download maps if is not in MAP_DIR
             if im_name not in map_files:
                 im = gl_map_by_center(exact_map_lat, exact_map_long, zoom = zoom, size = size)
-                im_path = os.path.join(MAP_DIR, im_name)
                 im.save(im_path)
                 im = np.array(im)
                 print('{} saved'.format(im_path))
                 map_files.append(im_name)
-            #counter for masks at the same maps
-            try:
-                masks_saved[name] += 1
-            except KeyError:
-                masks_saved[name] = 0
-            #crate mask of polygon and save
-            mask_png = obj_to_mask(polygon, exact_map_lat, exact_map_long, zoom, size)
-            png_name = name + '_hill_{}.png'.format(masks_saved[name])
-            png_path = os.path.join(MASKS_DIR, png_name)
-            cv2.imwrite(png_path, mask_png.astype(np.uint8))
+                map_list.append([counter, exact_map_long, exact_map_lat, zoom, size, name, region])
 
-            obj2map.append([counter, exact_map_long, exact_map_lat, zoom, size, name, region])
+            obj_list.append(polygon)
         counter += 1
 
-    path_to_table = os.path.join(ANNOT_DIR, 'obj2map.pickle')
-    with open(path_to_table, 'wb') as f:
-        pickle.dump(obj2map, f)
+    path_to_map_list = os.path.join(ANNOT_DIR, 'map_list.pickle')
+    with open(path_to_map_list, 'wb') as f:
+        pickle.dump(map_list, f)
+
+    path_to_obj_list = os.path.join(ANNOT_DIR, 'obj_list.pickle')
+    with open(path_to_obj_list, 'wb') as f:
+        pickle.dump(obj_list, f)
 
 def remove_masks_with_ovelapping_pixels(masks_dir):
     files = os.listdir(masks_dir)
@@ -320,3 +335,34 @@ def remove_masks_with_ovelapping_pixels(masks_dir):
                         print('removed {}'.format(rem_path))
                     except:
                         pass
+
+def remove_mask_duplicates(ANNOT_DIR):
+    # read list of polygon objects
+    path_to_obj_list = os.path.join(ANNOT_DIR, 'obj_list.pickle')
+    with open(path_to_obj_list, 'rb') as f:
+        old_list = pickle.load(f)
+
+    #initiate new list of non overlapping polygons
+    new_list = []
+    new_list.append(old_list[0])
+
+    #check polygons for overlap
+    for i, old in enumerate(old_list):
+        print('\robject {} of {} processed'.format(i, len(old_list)), end='')
+        lat, long = get_polygon_center(old)
+        old_mask = obj_to_mask(old, lat, long, zoom, size).astype(np.bool)
+
+        overlap = False
+        for new in new_list:
+            new_mask = obj_to_mask(new, lat, long, zoom, size).astype(np.bool)
+            if np.logical_and(old_mask, new_mask).any():
+                overlap = True
+                print('\noverlap found and removed')
+
+        if not overlap:
+            new_list.append(old)
+
+    path_to_obj_list = os.path.join(ANNOT_DIR, 'obj_list.pickle')
+    with open(path_to_obj_list, 'wb') as f:
+        pickle.dump(new_list, f)
+    print('')

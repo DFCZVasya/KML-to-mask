@@ -11,6 +11,7 @@ DATA_DIR = os.path.abspath(r'your DATA DIR')
 MAP_DIR = os.path.join(DATA_DIR, 'your MAP DIR')
 MASKS_DIR = os.path.join(DATA_DIR, 'your MASKS DIR')
 ANNOT_DIR = os.path.join(DATA_DIR, 'your ANNOTATION DIR')
+CHECK_DIR = os.path.join(DATA_DIR, 'your CHECK_DIR')
 ANNOT_SAVE_PATH = os.path.join(ANNOT_DIR, 'coco.json')  # you also can choose your own name
 KAGGLE_SAVE_PATH = os.path.join(ANNOT_DIR, 'kaggle.csv') # you also can choose your own name
 
@@ -90,47 +91,21 @@ def main():
 
             image_id = image_id + 1
 
-    with open(ANNOT_SAVE_PATH, 'w') as output_json_file:
+    with open(COCO_SAVE_PATH, 'w') as output_json_file:
         json.dump(coco_output, output_json_file)
-
-def main_kaggle_csv():
-    kaggle_output = []
-    kaggle_output.append(['ImageId', 'EncodedPixels', 'Width', 'Height'])
-
-    # filter for jpeg images
-    for root, _, files in os.walk(MAP_DIR):
-
-        image_files = filter_for_jpeg(root, files)
-        # go through each image
-        for image_filename in image_files:
-            image = Image.open(image_filename)
-            ImageId = os.path.basename(image_filename)
-            Width = image.size[0]
-            Height = image.size[1]
-
-            # filter for associated png annotations
-            for root, _, files in os.walk(MASKS_DIR):
-                annotation_files = filter_for_annotations(root, files, image_filename)
-
-                # go through each associated annotation
-                for annotation_filename in annotation_files:
-                    binary_mask = np.asarray(Image.open(annotation_filename)
-                        .convert('1')).astype(np.uint8)
-                    EncodedPixels = rle_encode_kaggle_style(binary_mask)
-                    kaggle_output.append([ImageId,
-                                         str(EncodedPixels),
-                                         str(Width),
-                                         str(Height)])
-
-    with open(KAGGLE_SAVE_PATH, 'w', newline='') as output_csv_file:
-        writer = csv.writer(output_csv_file)
-        for line in kaggle_output:
-            writer.writerow(line)
 
 
 if __name__ == "__main__":
     read_kml_and_load_maps(ANNOT_DIR, MAP_DIR, MASKS_DIR, GOOGLE_MAPS_API_KEY, zoom, size)
-    remove_masks_with_ovelapping_pixels(MASKS_DIR)
+    print('maps loaded')
+
+    remove_mask_duplicates(ANNOT_DIR)
+    print('mask duplicates removed')
+    make_masks(ANNOT_DIR, MAP_DIR, CHECK_DIR, MASKS_DIR)
+    print('masks created')
+
+    print('kml processing completed')
+
     print('annotating started ...')
     main()
     print('COCO annotation completed')

@@ -14,7 +14,7 @@ from main import MAP_DIR, ANNOT_SAVE_PATH, DATA_DIR, MASKS_DIR, ANNOT_DIR, KAGGL
 
 ###########################################################
 
-path_to_table = os.path.join(ANNOT_DIR, 'obj2map.pickle')
+path_to_table = os.path.join(ANNOT_DIR, 'map_list.pickle')
 scv_legend_path = os.path.join(ANNOT_DIR, 'legend.csv')
 IMG_DIR = MAP_DIR
 coco_path = ANNOT_SAVE_PATH
